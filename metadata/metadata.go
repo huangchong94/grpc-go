@@ -52,7 +52,7 @@ type MD map[string][]string
 func New(m map[string]string) MD {
 	md := MD{}
 	for k, val := range m {
-		md.Append(k, val)
+		md.append(k, val)
 	}
 	return md
 }
@@ -75,7 +75,7 @@ func Pairs(kv ...string) MD {
 	}
 	md := MD{}
 	for i := 0; i < len(kv); i += 2 {
-		md.Append(kv[i], kv[i+1])
+		md.append(kv[i], kv[i+1])
 	}
 	return md
 }
@@ -105,9 +105,9 @@ func (md MD) Set(k string, vals ...string) {
 	if len(vals) == 0 {
 		return
 	}
-	k = strings.ToLower(k)
-	md[k] = vals
+	md.set(k, vals...)
 }
+
 
 // Append adds the values to key k, not overwriting what was already stored at
 // that key.
@@ -117,15 +117,25 @@ func (md MD) Append(k string, vals ...string) {
 	if len(vals) == 0 {
 		return
 	}
-	k = strings.ToLower(k)
-	md[k] = append(md[k], vals...)
+	md.append(k, vals...)
 }
+
 
 // Delete removes the values for a given key k which is converted to lowercase
 // before removing it from md.
 func (md MD) Delete(k string) {
 	k = strings.ToLower(k)
 	delete(md, k)
+}
+
+func (md MD) set(k string, vals ...string) {
+	k = strings.ToLower(k)
+	md[k] = vals
+}
+
+func (md MD) append(k string, vals ...string) {
+	k = strings.ToLower(k)
+	md[k] = append(md[k], vals...)
 }
 
 // Join joins any number of mds into a single MD.
@@ -182,7 +192,7 @@ func FromIncomingContext(ctx context.Context) (MD, bool) {
 	}
 	out := MD{}
 	for k, v := range md {
-		out.Set(k, v...)
+		out.set(k, v...)
 	}
 	return out, true
 }
@@ -216,7 +226,7 @@ func FromOutgoingContext(ctx context.Context) (MD, bool) {
 
 	out := MD{}
 	for k, v := range raw.md {
-		out.Set(k, v...)
+		out.set(k, v...)
 	}
 	for _, added := range raw.added {
 		if len(added)%2 == 1 {
@@ -224,7 +234,7 @@ func FromOutgoingContext(ctx context.Context) (MD, bool) {
 		}
 
 		for i := 0; i < len(added); i += 2 {
-			out.Append(added[i], added[i+1])
+			out.append(added[i], added[i+1])
 		}
 	}
 	return out, ok
